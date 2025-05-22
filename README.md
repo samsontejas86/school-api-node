@@ -1,6 +1,6 @@
 # School Management API
 
-A Node.js API service for managing school data with location-based sorting capabilities.
+A Node.js API service for managing school data with location-based sorting capabilities. The system includes a comprehensive database of 230+ schools across major US cities.
 
 ## Features
 
@@ -9,12 +9,43 @@ A Node.js API service for managing school data with location-based sorting capab
 - Input validation for all endpoints
 - Distance-based sorting using Haversine formula
 - MySQL database integration
+- 230+ schools across 10 major US cities
+- Deployed and accessible via Railway
+
+## Live Demo
+
+The API is deployed and accessible at:
+```
+https://web-production-33b1c.up.railway.app
+```
+
+Try it out:
+- Health Check: `GET /health`
+- List Schools: `GET /api/listSchools?latitude=40.7128&longitude=-74.0060`
+- Add School: `POST /api/addSchool` (see API Documentation for request format)
+
+## Dataset Coverage
+
+The database includes schools from major US cities:
+- New York
+- Los Angeles
+- Chicago
+- Houston
+- Phoenix
+- Philadelphia
+- San Antonio
+- San Diego
+- Dallas
+- San Jose
+
+Each city has approximately 20-25 schools within a 5km radius of the city center, providing a realistic geographic distribution.
 
 ## Prerequisites
 
 - Node.js (v14 or higher)
 - MySQL (v8.0 or higher)
 - npm or yarn package manager
+- Postman (for testing API endpoints)
 
 ## Installation
 
@@ -44,7 +75,7 @@ DB_PORT=3306
 
 4. Start the server:
 ```bash
-# Development mode
+# Development mode with auto-reload
 npm run dev
 
 # Production mode
@@ -52,6 +83,22 @@ npm start
 ```
 
 ## API Documentation
+
+### Health Check
+Check if the API is running.
+
+- **URL**: `/health`
+- **Method**: `GET`
+
+**Success Response**:
+- **Code**: 200
+- **Content**:
+```json
+{
+  "status": "OK",
+  "timestamp": "2024-05-22T10:54:53.984Z"
+}
+```
 
 ### Add School
 Adds a new school to the database.
@@ -79,6 +126,12 @@ Adds a new school to the database.
   "schoolId": 1
 }
 ```
+
+**Field Constraints**:
+- `name`: String (1-255 characters)
+- `address`: String (1-500 characters)
+- `latitude`: Float (-90 to 90)
+- `longitude`: Float (-180 to 180)
 
 ### List Schools
 Retrieves all schools sorted by distance from provided coordinates.
@@ -112,9 +165,16 @@ GET /api/listSchools?latitude=40.7128&longitude=-74.0060
 }
 ```
 
+**Notes**:
+- Distance is calculated using the Haversine formula
+- Results are sorted by distance in ascending order
+- Distance is returned in kilometers
+- All schools in the database are returned, sorted by distance
+
 ## Error Responses
 
 ### Validation Error
+- **Code**: 400
 ```json
 {
   "errors": [
@@ -128,17 +188,27 @@ GET /api/listSchools?latitude=40.7128&longitude=-74.0060
 ```
 
 ### Server Error
+- **Code**: 500
 ```json
 {
   "error": "Internal server error"
 }
 ```
 
+### Common Error Codes
+- `400` - Bad Request (invalid input)
+- `404` - Not Found
+- `500` - Internal Server Error
+
 ## Development
 
 ### Running Tests
 ```bash
+# Run all tests
 npm test
+
+# Run specific test file
+npm test -- test/schools.test.js
 ```
 
 ### Database Schema
@@ -156,32 +226,57 @@ CREATE TABLE schools (
 )
 ```
 
+**Field Descriptions**:
+- `id`: Unique identifier for each school
+- `name`: School name (max 255 characters)
+- `address`: Physical address (max 500 characters)
+- `latitude`: Geographic latitude (-90 to 90)
+- `longitude`: Geographic longitude (-180 to 180)
+- `created_at`: Timestamp of record creation
+- `updated_at`: Timestamp of last update
+
 ## Deployment
 
-1. Set up your production environment:
-   - Install Node.js and MySQL
-   - Configure environment variables
-   - Set up a process manager (e.g., PM2)
+The application is deployed on Railway.app with a MySQL database. To deploy your own instance:
 
-2. Deploy the application:
+1. Fork this repository
+2. Sign up for Railway.app
+3. Create a new project from your GitHub repository
+4. Add a MySQL service to your project
+5. Configure the following environment variables:
+   - `NODE_ENV=production`
+   - `PORT=3000`
+   - `MYSQL_URL` (automatically set by Railway)
+
+## Data Population Scripts
+
+The project includes two scripts for populating the database:
+1. `populateSchools.js` - Adds an initial set of schools
+2. `generateMoreSchools.js` - Generates additional schools with realistic data
+
+To run the scripts:
 ```bash
-# Install PM2 globally
-npm install -g pm2
+# For initial schools
+node src/scripts/populateSchools.js
 
-# Start the application with PM2
-pm2 start src/server.js --name school-api
-
-# Save PM2 configuration
-pm2 save
+# For generating more schools
+NODE_ENV=production node src/scripts/generateMoreSchools.js
 ```
 
-3. Configure a reverse proxy (e.g., Nginx) to forward requests to your Node.js application.
+## Testing with Postman
 
-## Postman Collection
+1. Import the Postman collection from:
+   ```
+   ./postman/School_Management_API.postman_collection.json
+   ```
 
-Import the following collection in Postman to test the APIs:
+2. The collection includes requests for:
+   - Health Check
+   - Add School
+   - List Schools
+   - Error Cases
 
-[Download Postman Collection](./postman/School_Management_API.postman_collection.json)
+3. Environment variables are included for both local and production URLs
 
 ## Contributing
 
@@ -193,4 +288,4 @@ Import the following collection in Postman to test the APIs:
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details. 
+This project is licensed under the MIT License - see the LICENSE file for details.
