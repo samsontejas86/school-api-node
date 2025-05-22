@@ -10,20 +10,6 @@ console.log('Database Config:', {
   port: process.env.DB_PORT || 3306
 });
 
-// First create a connection without database selection
-const createDbConnection = async () => {
-  const connection = await mysql.createConnection({
-    host: process.env.DB_HOST || 'localhost',
-    user: process.env.DB_USER || 'root',
-    password: process.env.DB_PASSWORD || 'samson123', // Add default password
-    port: process.env.DB_PORT || 3306
-  });
-
-  // Create database if it doesn't exist
-  await connection.query(`CREATE DATABASE IF NOT EXISTS ${process.env.DB_NAME || 'school_management'}`);
-  await connection.end();
-};
-
 // Pool for regular database operations
 const pool = mysql.createPool({
   host: process.env.MYSQLHOST || process.env.DB_HOST || 'localhost',
@@ -31,9 +17,9 @@ const pool = mysql.createPool({
   password: process.env.MYSQLPASSWORD || process.env.DB_PASSWORD || 'samson123',
   database: process.env.MYSQLDATABASE || process.env.DB_NAME || 'school_management',
   port: process.env.MYSQLPORT || process.env.DB_PORT || 3306,
-  ssl: {
-    rejectUnauthorized: true
-  },
+  ssl: process.env.MYSQLHOST ? {
+    rejectUnauthorized: false
+  } : false,
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0
@@ -42,10 +28,8 @@ const pool = mysql.createPool({
 // Function to initialize database and create tables if they don't exist
 async function initializeDatabase() {
   try {
-    // First ensure database exists
-    await createDbConnection();
-
     const connection = await pool.getConnection();
+    console.log('Successfully connected to the database');
     
     // Create schools table if it doesn't exist
     await connection.query(`
