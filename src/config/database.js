@@ -4,28 +4,23 @@ require('dotenv').config();
 // Log connection attempt
 console.log('Database Connection Info:', {
   isProduction: process.env.NODE_ENV === 'production',
-  hasMySQLUrl: !!process.env.MYSQL_URL
+  hasMySQLUrl: !!process.env.MYSQL_URL,
+  hasRailwayEnv: !!process.env.RAILWAY_ENVIRONMENT,
+  availableEnvVars: Object.keys(process.env).filter(key => key.includes('MYSQL') || key.includes('DATABASE'))
 });
 
 let pool;
 
 if (process.env.NODE_ENV === 'production') {
   // Production configuration (Railway)
-  if (!process.env.MYSQL_URL) {
-    throw new Error('MYSQL_URL is required in production environment');
+  const connectionUrl = process.env.MYSQL_URL || process.env.DATABASE_URL;
+  
+  if (!connectionUrl) {
+    throw new Error('Database URL (MYSQL_URL or DATABASE_URL) is required in production environment');
   }
 
-  pool = mysql.createPool({
-    uri: process.env.MYSQL_URL,
-    ssl: {
-      rejectUnauthorized: false
-    },
-    waitForConnections: true,
-    connectionLimit: 10,
-    queueLimit: 0
-  });
-  
-  console.log('Using production database configuration with MYSQL_URL');
+  pool = mysql.createPool(connectionUrl);
+  console.log('Using production database configuration with connection URL');
 } else {
   // Development configuration
   pool = mysql.createPool({
@@ -68,7 +63,8 @@ async function initializeDatabase() {
     console.error('Error initializing database:', error);
     console.error('Environment details:', {
       NODE_ENV: process.env.NODE_ENV,
-      hasMySQLUrl: !!process.env.MYSQL_URL
+      RAILWAY_ENVIRONMENT: process.env.RAILWAY_ENVIRONMENT,
+      availableEnvVars: Object.keys(process.env).filter(key => key.includes('MYSQL') || key.includes('DATABASE'))
     });
     throw error;
   }
